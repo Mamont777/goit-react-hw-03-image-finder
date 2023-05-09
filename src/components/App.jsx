@@ -14,6 +14,7 @@ export class App extends Component {
     page: 1,
     query: '',
     items: [],
+    totalHits: 0,
     largeImageURL: '',
     error: null,
     isLoading: false,
@@ -46,16 +47,20 @@ export class App extends Component {
   fetchImages = async (page, query) => {
     try {
       this.setState({ isLoading: true });
-      const images = await API.loadImage(query, page);
+      const { images, totalHits } = await API.loadImage(query, page);
 
-      this.setState(prevState => ({
-        items: [...prevState.items, ...images],
-        isLoading: false,
-      }));
       if (images.length === 0) {
         return toast.warning(
           "Sorry, we can't find anything for your request. Please, enter another request"
         );
+      }
+      this.setState(prevState => ({
+        items: [...prevState.items, ...images],
+        totalHits,
+        showBtn: this.state.page < Math.ceil(totalHits / 12),
+      }));
+      if (totalHits) {
+        toast.success(`Found ${totalHits} images`);
       }
     } catch (error) {
       this.setState({ error: error.message });
@@ -65,7 +70,8 @@ export class App extends Component {
   };
 
   render() {
-    const { items, isLoading, error, largeImageURL, isModalOpen } = this.state;
+    const { items, isLoading, error, largeImageURL, isModalOpen, showBtn } =
+      this.state;
     return (
       <Container>
         <Searchbar onSubmit={this.handleSubmit} isLoading={isLoading} />
@@ -73,7 +79,7 @@ export class App extends Component {
         {items.length > 0 && (
           <ImageGallery items={items} onClick={this.toggleModal} />
         )}
-        {items.length > 0 && (
+        {showBtn && (
           <Button onLoadMore={this.handleLoadMore} isLoading={isLoading} />
         )}
         <ToastContainer transition={Slide} />

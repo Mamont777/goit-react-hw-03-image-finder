@@ -9,8 +9,9 @@ export const loadImage = async (query, page) => {
     const response = await axios.get(
       `?q=${query}&page=${page}&key=${API_KEY}&${BASE_PARAMS}`
     );
+    const { hits, totalHits } = response.data;
 
-    const images = response.data.hits.map(img => {
+    const images = hits.map(img => {
       const { id, webformatURL, largeImageURL, tags } = img;
       return {
         id,
@@ -19,7 +20,8 @@ export const loadImage = async (query, page) => {
         tags,
       };
     });
-    return images;
+
+    return { images, totalHits };
   } catch (error) {
     console.error(error);
   }
